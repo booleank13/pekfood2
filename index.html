@@ -8,26 +8,32 @@
 </head>
 <body>
     <div id="game-container">
-        <div id="header">
+        <!-- Background Logo/Header -->
+        <div id="logo-container">
             <img src="assets/top_logo.png" alt="Pekfood Logo" id="top-logo">
         </div>
-        <canvas id="gameCanvas" width="320" height="480"></canvas>
 
-        <div id="ui-layer">
-            <div id="score-container">
-                <div id="score-fill"></div>
-            </div>
+        <!-- Canvas Game Layer -->
+        <canvas id="gameCanvas"></canvas>
+
+        <!-- HUD Layer (Timer, Score) -->
+        <div id="hud">
             <div id="timer">15</div>
         </div>
+        <div id="score-bar-container">
+            <div id="score-bar"></div>
+        </div>
 
-        <div id="overlay">
-            <div id="start-screen">
-                <p>Oynamak için Tıkla</p>
-            </div>
-            <div id="end-screen" class="hidden">
-                <img src="assets/final_logo.png" alt="Pekfood Final Logo" id="final-logo">
-                <p class="slogan">Pek Bi' ENFES</p>
-            </div>
+        <!-- Interactive UI Screens -->
+        <div id="start-screen" class="screen active">
+            <h1>Pekman</h1>
+            <button class="btn" id="start-btn">Oynamak İçin Tıkla</button>
+        </div>
+
+        <div id="end-screen" class="screen">
+            <img src="assets/final_logo.png" alt="Pekfood Final Logo" id="final-logo">
+            <p class="slogan">Pek Bi' ENFES</p>
+            <button class="btn" id="visit-btn">Siteye Git</button>
         </div>
     </div>
     <script src="script.js"></script>
