@@ -174,6 +174,8 @@ function startGame() {
     pacman.y = 6 * TILE_SIZE + TILE_SIZE / 2;
     pacman.direction = { x: 0, y: 0 };
     pacman.nextDirection = { x: 0, y: 0 };
+    pacman.mouthOpen = 0;
+    pacman.mouthSpeed = 0.1;
 
     initFoods();
     currentScore = 0;
@@ -368,7 +370,7 @@ function update(deltaTime) {
         // Let's just make it move right and wrap around
         pacman.x += 2;
         if (pacman.x > GAME_WIDTH + 20) pacman.x = -20;
-        pacman.mouthOpen += 0.1;
+        pacman.mouthOpen += pacman.mouthSpeed;
         if (pacman.mouthOpen > 0.5 || pacman.mouthOpen < 0) pacman.mouthSpeed = -pacman.mouthSpeed;
         pacman.angle = 0;
 
