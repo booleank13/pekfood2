@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pekman</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="game-container">
+        <div id="header">
+            <img src="assets/top_logo.png" alt="Pekfood Logo" id="top-logo">
+        </div>
+        <canvas id="gameCanvas" width="320" height="480"></canvas>
+
+        <div id="ui-layer">
+            <div id="timer">15</div>
+        </div>
+
+        <div id="overlay">
+            <div id="start-screen">
+                <p>Oynamak için Tıkla</p>
+            </div>
+            <div id="end-screen" class="hidden">
+                <img src="assets/final_logo.png" alt="Pekfood Final Logo" id="final-logo">
+                <p class="slogan">Pek Bi' ENFES</p>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
