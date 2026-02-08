@@ -124,14 +124,11 @@ class PacMan {
 
     draw(ctx) {
         ctx.save();
-        ctx.translate(this.x, this.y);
+        // Round coordinates to avoid sub-pixel blurring/bleeding
+        ctx.translate(Math.round(this.x), Math.round(this.y));
         ctx.rotate(this.angle);
 
         ctx.beginPath();
-        const mouthAngle = 0.2 * Math.PI * (0.5 + 0.5 * Math.sin(this.mouthOpen * Math.PI * 4));
-        // Smoother oscillation: 0.2 * PI is max open.
-        // Actually simple linear ping-pong is fine.
-
         // Use linear open/close for classic look
         const open = Math.abs(this.mouthOpen);
 
@@ -255,8 +252,17 @@ function initFoods() {
     // Take first 6
     let spotsToUse = possibleSpots.slice(0, 6);
 
-    spotsToUse.forEach(spot => {
-        let img = assets.food[Math.floor(Math.random() * assets.food.length)];
+    // Prepare unique icons
+    let iconIndices = Array.from({length: assets.food.length}, (_, i) => i);
+    // Shuffle icon indices
+    for (let i = iconIndices.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [iconIndices[i], iconIndices[j]] = [iconIndices[j], iconIndices[i]];
+    }
+
+    spotsToUse.forEach((spot, index) => {
+        let imgIndex = iconIndices[index % iconIndices.length];
+        let img = assets.food[imgIndex];
         let x = spot.c * TILE_SIZE + TILE_SIZE / 2;
         let y = spot.r * TILE_SIZE + TILE_SIZE / 2;
         foods.push(new Food(x, y, img));
