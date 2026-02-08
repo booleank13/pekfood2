@@ -3,9 +3,9 @@ const ctx = canvas.getContext('2d');
 
 const GAME_WIDTH = 320;
 const GAME_HEIGHT = 480;
-const TILE_SIZE = 20;
-const COLS = 16;
-const ROWS = 24;
+const TILE_SIZE = 40;
+const COLS = 8;
+const ROWS = 12;
 
 // Ensure canvas resolution matches display
 canvas.width = GAME_WIDTH;
@@ -14,32 +14,20 @@ canvas.height = GAME_HEIGHT;
 let lastTime = 0;
 let gameState = 'START'; // START, PLAYING, END
 
-// Map: 1 = Wall, 0 = Path
+// Map: 1 = Wall, 0 = Path, 2 = Black Wall (No Move)
 const map = [
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], // Top Logo Area
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], // Top Logo Area
-    [1,0,1,1,1,1,0,1,1,0,1,1,1,1,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,1,1,0,1,1,1,1,1,1,0,1,1,0,1],
-    [1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1],
-    [1,1,1,1,1,1,0,1,1,0,1,1,1,1,1,1],
-    [1,1,1,1,1,1,0,0,0,0,1,1,1,1,1,1],
-    [1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1],
-    [1,0,1,1,1,0,1,1,1,1,0,1,1,1,0,1],
-    [1,0,0,1,1,0,0,0,0,0,0,1,1,0,0,1],
-    [1,1,0,1,1,0,1,0,0,1,0,1,1,0,1,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,1,1,1,1,0,1,1,0,1,1,1,1,0,1],
-    [1,0,1,1,1,1,0,1,1,0,1,1,1,1,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,1,1,1,1,0,1,1,0,1,1,1,1,0,1],
-    [1,0,0,0,0,1,0,1,1,0,1,0,0,0,0,1],
-    [1,1,1,1,0,1,0,1,1,0,1,0,1,1,1,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], // Score Bar Area
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], // Score Bar Area
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+    [2,2,2,2,2,2,2,2], // Top logo area (no move)
+    [2,2,2,2,2,2,2,2], // Top logo area
+    [2,2,2,2,2,2,2,2], // Top logo area
+    [1,1,1,1,1,1,1,1], // Top wall of play area
+    [1,0,0,0,0,0,0,1],
+    [1,0,1,1,1,1,0,1],
+    [1,0,0,0,0,0,0,1],
+    [1,0,1,1,1,1,0,1],
+    [1,0,1,0,0,1,0,1],
+    [1,0,0,0,0,0,0,1],
+    [1,1,1,1,1,1,1,1], // Bottom wall of play area
+    [2,2,2,2,2,2,2,2]  // Score bar area
 ];
 
 // Assets
@@ -54,8 +42,8 @@ class PacMan {
     constructor(x, y) {
         this.x = x;
         this.y = y;
-        this.radius = 8; // Reduced to fit in 20px tiles
-        this.speed = 2; // Slightly slower for better control
+        this.radius = 15; // Increased for 40px tiles
+        this.speed = 3;
         this.direction = { x: 0, y: 0 };
         this.nextDirection = { x: 0, y: 0 };
         this.mouthOpen = 0;
@@ -79,11 +67,11 @@ class PacMan {
         for (let r = minRow; r <= maxRow; r++) {
             for (let c = minCol; c <= maxCol; c++) {
                 if (r >= 0 && r < ROWS && c >= 0 && c < COLS) {
-                    if (map[r][c] === 1) {
+                    if (map[r][c] !== 0) { // 1 or 2 is solid
                         return false;
                     }
                 } else {
-                    // Out of bounds is considered wall usually, but we have boundary walls in map
+                    // Out of bounds is considered wall
                 }
             }
         }
@@ -168,21 +156,30 @@ const scoreFill = document.getElementById('score-fill');
 
 let gameDuration = 15000;
 let gameTimer = 0;
-let totalFood = 0;
+let currentScore = 0;
+const MAX_SCORE = 100;
 
 function startGame() {
     gameState = 'PLAYING';
     overlay.classList.add('hidden');
     startScreen.classList.add('hidden');
 
-    // Reset
-    pacman.x = GAME_WIDTH / 2;
-    pacman.y = GAME_HEIGHT / 2;
+    // Reset - Center of tile at col 4, row 6 (160 + 20, 240 + 20) -> (180, 260)
+    // Actually map width is 320. Col 4 is 160-200. Center is 180.
+    // Row 6 is 240-280. Center is 260.
+    // Wait, array index 4 is 5th column. 0,1,2,3,4.
+    // Col 0: 0-40. Col 1: 40-80. Col 2: 80-120. Col 3: 120-160. Col 4: 160-200.
+    // Center of Col 4 is 180.
+    // Row 6: 240-280. Center is 260.
+    // Let's check map[6][4].
+    // Row 6: [1,0,0,0,0,0,0,1] -> Index 4 is 0. Safe.
+    pacman.x = 4 * TILE_SIZE + TILE_SIZE / 2;
+    pacman.y = 6 * TILE_SIZE + TILE_SIZE / 2;
     pacman.direction = { x: 0, y: 0 };
     pacman.nextDirection = { x: 0, y: 0 };
 
     initFoods();
-    totalFood = foods.length;
+    currentScore = 0;
     scoreFill.style.width = '0%';
     gameTimer = gameDuration;
 }
@@ -201,14 +198,14 @@ overlay.addEventListener('click', () => {
     }
 });
 
-const pacman = new PacMan(GAME_WIDTH / 2, GAME_HEIGHT / 2);
+const pacman = new PacMan(4 * TILE_SIZE + TILE_SIZE / 2, 6 * TILE_SIZE + TILE_SIZE / 2);
 
 class Food {
     constructor(x, y, img) {
         this.x = x;
         this.y = y;
-        this.width = 18;
-        this.height = 18;
+        this.width = 25; // Increased for 40px tiles
+        this.height = 25;
         this.img = img;
         this.markedForDeletion = false;
     }
@@ -233,25 +230,37 @@ function initFoods() {
     foods = [];
     if (assets.food.length === 0) return;
 
+    let possibleSpots = [];
+
     for (let r = 0; r < ROWS; r++) {
         for (let c = 0; c < COLS; c++) {
             if (map[r][c] === 0) {
-                // Keep center clear for Pacman start (approx row 12, col 8)
-                if (Math.abs(c - 8) < 2 && Math.abs(r - 12) < 2) continue;
+                // Avoid Pacman start pos (approx row 6, col 4 for 8x12 map center)
+                // Pacman is at GAME_WIDTH/2, GAME_HEIGHT/2 -> 160, 240
+                // 160 / 40 = 4 (Column index 4)
+                // 240 / 40 = 6 (Row index 6)
+                if (Math.abs(c - 4) < 1 && Math.abs(r - 6) < 1) continue;
 
-                // Keep top area clear for logo (Rows 1-3)
-                if (r < 4) continue;
-
-                // Keep bottom area clear for score bar (Rows 21-22)
-                if (r > 20) continue;
-
-                let img = assets.food[Math.floor(Math.random() * assets.food.length)];
-                let x = c * TILE_SIZE + TILE_SIZE / 2;
-                let y = r * TILE_SIZE + TILE_SIZE / 2;
-                foods.push(new Food(x, y, img));
+                possibleSpots.push({c, r});
             }
         }
     }
+
+    // Shuffle spots
+    for (let i = possibleSpots.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [possibleSpots[i], possibleSpots[j]] = [possibleSpots[j], possibleSpots[i]];
+    }
+
+    // Take first 6
+    let spotsToUse = possibleSpots.slice(0, 6);
+
+    spotsToUse.forEach(spot => {
+        let img = assets.food[Math.floor(Math.random() * assets.food.length)];
+        let x = spot.c * TILE_SIZE + TILE_SIZE / 2;
+        let y = spot.r * TILE_SIZE + TILE_SIZE / 2;
+        foods.push(new Food(x, y, img));
+    });
 }
 
 function drawMap(ctx) {
@@ -261,6 +270,7 @@ function drawMap(ctx) {
             if (map[r][c] === 1) {
                 ctx.fillRect(c * TILE_SIZE, r * TILE_SIZE, TILE_SIZE, TILE_SIZE);
             }
+            // map[r][c] === 2 is black/invisible wall, no draw
         }
     }
 }
@@ -272,6 +282,7 @@ function checkCollisions() {
         let distance = Math.hypot(dx, dy);
         if (distance < pacman.radius + food.width/2) {
             food.markedForDeletion = true;
+            currentScore += 20;
         }
     });
     foods = foods.filter(food => !food.markedForDeletion);
@@ -359,14 +370,12 @@ function update(deltaTime) {
         pacman.update();
         checkCollisions();
 
-        // Update Score
-        let progress = 0;
-        if (totalFood > 0) {
-            progress = ((totalFood - foods.length) / totalFood) * 100;
-        }
+        // Update Score Bar
+        let progress = (currentScore / MAX_SCORE) * 100;
+        if (progress > 100) progress = 100;
         scoreFill.style.width = `${progress}%`;
 
-        if (foods.length === 0) {
+        if (currentScore >= MAX_SCORE) {
             endGame();
         }
 
